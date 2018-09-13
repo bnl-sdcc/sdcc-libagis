@@ -366,7 +366,7 @@ class AgisCEQueue(object):
         s += "maxtime=%s " % self.parent.maxtime
         return s
 
-class Agis(ConfigInterface):
+class Agis(object):
     '''
     creates the configuration files with 
     information retrieved from AGIS
@@ -687,6 +687,24 @@ class Agis(ConfigInterface):
         s += 'numfactories=%s ' % self.numfactories
         s += 'jobsperpilot=%s ' % self.jobsperpilot
         return s
+
+
+def getDefaultConfig():
+    configstr = '''[agis[
+baseurl = http://atlas-agis-api.cern.ch/request/pandaqueue/query/list/?json&preset=schedconf.all
+defaultsfile= /etc/autopyfactory/agisdefaults.conf
+sleep = 3600
+vos = atlas
+clouds = us
+activities = production
+pilotmanager = apf
+jobsperpilot = 1.5
+numfactories = 4
+'''
+    cp = ConfigParser()
+    buf = StringIO.StringIO(configstr)
+    cp.readfp(buf)
+    return cp
         
 
 if __name__ == '__main__':
@@ -703,7 +721,7 @@ if __name__ == '__main__':
     activity = None
     jobsperpilot = 1.5
     numfactories = 4
-    outfile = '/tmp/agis-apf-config.conf'
+    outfile = sys.stdout
     fconfig_file = None
     default_configfile = os.path.expanduser("/etc/autopyfactory/autopyfactory.conf")
     defaultsfiles = None
@@ -713,8 +731,8 @@ if __name__ == '__main__':
         -h --help                   Print this message
         -d --debug                  Debug messages
         -v --verbose                Verbose information
-        -c --config                 Config file [/etc/autopyfactory/autopyfactory.conf]
-        -o --outfile                Output file ['/tmp/agis-apf-config.conf']
+        -c --config                 Config file [None]
+        -o --outfile                Output file [ stdout ]
         -j --jobsperpilot           Scale factor. [1.5]
         -n --numfactories           Multi-factory scale factor. 
         -D --defaults               Defaults file [None]
@@ -791,20 +809,7 @@ if __name__ == '__main__':
         log.debug("Read config file %s, return value: %s" % (fconfig_file, got_config))  
     else:
         # Create valid config...
-        fconfig.add_section('Factory')
-
-        # Set unconditional defaults
-        fconfig.set('Factory', 'config.queues.agis.baseurl', 'http://atlas-agis-api.cern.ch/request/pandaqueue/query/list/?json&preset=schedconf.all'   )
-        fconfig.set('Factory', 'config.queues.agis.sleep', '3600'  )
-        fconfig.set('Factory', 'config.queues.agis.jobsperpilot', '1.5' )
-        fconfig.set('Factory', 'config.queues.agis.numfactories', '4')
-        
-        """
-        config.queues.agis.vos = atlas
-        config.queues.agis.clouds = US
-        config.queues.agis.activities = analysis,production
-        config.queues.agis.defaultsfiles = /etc/autopyfactory/agisdefaults.conf
-        """
+        fconfig = getDefaultCondig()
 
     # Override defaults with command line values, if given    
     if vo is not None:
